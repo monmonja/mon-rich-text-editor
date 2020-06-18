@@ -595,8 +595,9 @@
         <head>
             <meta charset="UTF-8">
             <style>
-            table { border-spacing: 0; padding: 4px; width: 100%; table-layout: fixed}
+                table { border-spacing: 0; padding: 4px; width: 100%; table-layout: fixed}
                 table td { border:1px solid #CCC}
+                img { max-width: 100% }
             </style>
         </head>
         <body contenteditable="true">${this.currentValue}</body></html>
