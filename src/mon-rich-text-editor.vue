@@ -1,5 +1,5 @@
 <template>
-    <div class="iframe-rich-text">
+    <div class="mon-rich-text-editor">
         <div class="actions-bar" >
             <ul :class="{'hide': this.toolbarToShow !== 'main'}">
                 <slot name="buttons-front" v-bind="{ toolbarToShow, changeToolbarToShow, iframe }"></slot>
@@ -165,6 +165,17 @@
 </template>
 
 <style lang="scss" scoped>
+    .full-screen {
+        position: fixed;
+        z-index: 99999;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        .main-component-wrapper {
+            height: calc(100% - 44px);
+        }
+    }
     .main-component-wrapper {
         border: 1px solid #CCC;
         margin-top: -1px;
