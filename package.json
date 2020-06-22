@@ -2,7 +2,7 @@
   "name": "mon-rich-text-editor",
   "version": "0.0.1",
   "description": "wysiwyg in vue",
-  "main": "src/index.d.ts",
+  "main": "src/index.ts",
   "author": "Almond Joseph Mendoza",
   "license": "MIT",
   "devDependencies": {

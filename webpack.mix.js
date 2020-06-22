@@ -2,12 +2,20 @@ let mix = require('laravel-mix');
 
 mix.webpackConfig({
     externals: {
-        "jquery": "jQuery",
-        "quill": "Quill"
-        // ,"vue": "Vue"
+        vue: {
+            commonjs: 'vue',
+            commonjs2: 'vue',
+            amd: 'vue',
+            root: 'Vue'
+        }
     },
     resolve: {
-        extensions: ['.vue']
+        extensions: ['.vue'],
+        resolve: {
+            alias: {
+                'vue$': 'vue/dist/vue.esm.djs'
+            }
+        }
     }
 });
 mix.ts('src/index.ts', 'dist');

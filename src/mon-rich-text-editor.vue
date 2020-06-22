@@ -2,7 +2,7 @@
     <div class="iframe-rich-text">
         <div class="actions-bar" >
             <ul :class="{'hide': this.toolbarToShow !== 'main'}">
-
+                <slot name="buttons-front" v-bind="{ toolbarToShow, changeToolbarToShow, iframe }"></slot>
                 <li @click="undo" :class="{disabled: !this.undoActivated}" class="icon-button">
                     <i class="material-icons icon">undo</i>
                 </li>
@@ -551,7 +551,7 @@
         }
 
 
-        private checkButtonStates () {
+        private initButtonStates () {
             this.formatBoldActivated = this.iframeDocument.queryCommandState('bold');
             this.formatItalicActivated = this.iframeDocument.queryCommandState('italic');
             this.formatUnderlineActivated = this.iframeDocument.queryCommandState('underline');
@@ -584,6 +584,11 @@
                 this.formatBlockElement = currentNode.parentElement.nodeName.toLowerCase();
                 this.fontSize = windowIframe.getComputedStyle(currentNode, null)['fontSize'];
             }
+        }
+
+        private checkButtonStates () {
+            this.initButtonStates();
+            this.$emit('mon-iframe-changed');
         }
 
         private initIframe () : void {
@@ -627,6 +632,9 @@
                 this.currentValue = jQuery(this.$el).siblings(this.loadValueFromSibling).val();
             }
             this.initIframe();
+            this.$on('mon-iframe-changed', () => {
+                this.initButtonStates();
+            });
         }
     }
 </script>
