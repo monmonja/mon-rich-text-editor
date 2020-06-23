@@ -4,9 +4,7 @@
             <ul :class="{'hide': this.toolbarToShow !== 'main'}">
                 <slot name="buttons-front" v-bind="{ toolbarToShow, changeToolbarToShow, iframe }"></slot>
                 <undo :iframe="iframe"></undo>
-                <li @click="redo" :class="{disabled: !this.redoActivated}"  class="icon-button">
-                    <i class="material-icons icon">redo</i>
-                </li>
+                <redo :iframe="iframe"></redo>
                 <li class="separator"></li>
 
                 <li @click="showTextToolbar" class="text-button " > <!-- v-html="formatBlockElement"> -->
@@ -281,12 +279,13 @@
     import Vue from 'vue'
     import { Prop, Component } from 'vue-property-decorator'
     import Undo from "./buttons/undo.vue";
+    import Redo from "./buttons/redo.vue";
     declare var openFileManagerComponent;
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
-        components: {Undo}
+        components: {Redo, Undo}
     })
     export default class MonRichTextEditor extends Vue {
         @Prop({ type: String, default: '' }) readonly value:string
@@ -304,7 +303,6 @@
         private formatJustifyJustifyActivated: boolean = false
         private insertUnorderedListActivated: boolean = false
         private insertOrderedListActivated: boolean = false
-        private redoActivated: boolean = false
         private linkActivated: boolean = false
         private viewSourceCodeActivated: boolean = false
         private currentValue: string = ''
@@ -386,12 +384,6 @@
             this.iframeChanged();
         }
 
-        public redo () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('redo');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
 
         public addHorizontalRule () : void {
             this.iframeDocument.body.focus();
@@ -570,7 +562,6 @@
 
             this.insertUnorderedListActivated = this.iframeDocument.queryCommandState('insertUnorderedList');
             this.insertOrderedListActivated = this.iframeDocument.queryCommandState('insertOrderedList');
-            this.redoActivated = this.iframeDocument.queryCommandEnabled('redo');
 
             let windowIframe = this.iframe.contentWindow as Window;
             let currentNode = windowIframe.getSelection().focusNode as HTMLElement;
@@ -638,7 +629,6 @@
             }
             this.initIframe();
             this.$root.$on('mon-iframe-changed', () => {
-                console.log('mon-iframe-changed')
                 this.initButtonStates();
             });
 
