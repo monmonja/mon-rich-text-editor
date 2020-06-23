@@ -3,9 +3,7 @@
         <div class="actions-bar" >
             <ul :class="{'hide': this.toolbarToShow !== 'main'}">
                 <slot name="buttons-front" v-bind="{ toolbarToShow, changeToolbarToShow, iframe }"></slot>
-                <li @click="undo" :class="{disabled: !this.undoActivated}" class="icon-button">
-                    <i class="material-icons icon">undo</i>
-                </li>
+                <undo :iframe="iframe"></undo>
                 <li @click="redo" :class="{disabled: !this.redoActivated}"  class="icon-button">
                     <i class="material-icons icon">redo</i>
                 </li>
@@ -159,6 +157,7 @@
         <div class="main-component-wrapper" :class="{'view-source': this.viewSourceCodeActivated}">
             <iframe class="main-component"></iframe>
             <textarea class="source-code" :name="sourceFormName" @keyup="sourceCodeChanged" v-model="currentValue"></textarea>
+            <slot name="overlay" v-bind="{ iframe }"></slot>
         </div>
 
     </div>
@@ -234,7 +233,8 @@
             clear: both;
         }
         li {
-            float: left;
+            /*float: left;*/
+            display: inline-block;
             cursor: pointer;
             height: 36px;
             line-height: 36px;
@@ -280,11 +280,13 @@
 <script lang="ts">
     import Vue from 'vue'
     import { Prop, Component } from 'vue-property-decorator'
+    import Undo from "./buttons/undo.vue";
     declare var openFileManagerComponent;
     declare const jQuery;
 
     @Component({
-        name: 'MonRichTextEditor'
+        name: 'MonRichTextEditor',
+        components: {Undo}
     })
     export default class MonRichTextEditor extends Vue {
         @Prop({ type: String, default: '' }) readonly value:string
@@ -302,7 +304,6 @@
         private formatJustifyJustifyActivated: boolean = false
         private insertUnorderedListActivated: boolean = false
         private insertOrderedListActivated: boolean = false
-        private undoActivated: boolean = false
         private redoActivated: boolean = false
         private linkActivated: boolean = false
         private viewSourceCodeActivated: boolean = false
@@ -385,12 +386,6 @@
             this.iframeChanged();
         }
 
-        public undo () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('undo');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
         public redo () : void {
             this.iframeDocument.body.focus();
             this.iframeDocument.execCommand('redo');
@@ -559,6 +554,7 @@
         public iframeChanged () : void {
             this.currentValue = this.iframeDocument.body.innerHTML.trim();
             this.$emit('input',  this.currentValue);
+            this.$root.$emit('mon-iframe-changed');
         }
 
 
@@ -575,8 +571,6 @@
             this.insertUnorderedListActivated = this.iframeDocument.queryCommandState('insertUnorderedList');
             this.insertOrderedListActivated = this.iframeDocument.queryCommandState('insertOrderedList');
             this.redoActivated = this.iframeDocument.queryCommandEnabled('redo');
-            this.undoActivated = this.iframeDocument.queryCommandEnabled('undo');
-
 
             let windowIframe = this.iframe.contentWindow as Window;
             let currentNode = windowIframe.getSelection().focusNode as HTMLElement;
@@ -643,9 +637,14 @@
                 this.currentValue = jQuery(this.$el).siblings(this.loadValueFromSibling).val();
             }
             this.initIframe();
-            this.$on('mon-iframe-changed', () => {
+            this.$root.$on('mon-iframe-changed', () => {
+                console.log('mon-iframe-changed')
                 this.initButtonStates();
             });
+
+        }
+        updated () : void {
+            this.$root.$emit('mon-iframe-changed');
         }
     }
 </script>
