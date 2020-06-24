@@ -1,16 +1,9 @@
 <template>
-    <li @click="undo" :class="{disabled: !this.buttonActivated}" class="icon-button">
+    <li @click="activate" :class="{disabled: !this.buttonActivated}" class="icon-button">
         <i class="material-icons icon">redo</i>
     </li>
 </template>
 
-<style lang="scss" scoped>
-    ul li {
-        &.disabled i.material-icons{
-            color: #dadada !important;
-        }
-    }
-</style>
 
 <script lang="ts">
     import Vue from 'vue'
@@ -24,7 +17,7 @@
         @Prop({ required: true }) readonly iframe:HTMLIFrameElement
         private buttonActivated: boolean = false
 
-        public undo () : void {
+        public activate () : void {
             this.iframe.contentWindow.document.body.focus();
             this.iframe.contentWindow.document.execCommand('redo');
             this.$root.$emit('mon-iframe-changed');

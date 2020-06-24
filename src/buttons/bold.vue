@@ -1,6 +1,6 @@
 <template>
-    <li @click="activate" :class="{disabled: !this.buttonActivated}" class="icon-button">
-        <i class="material-icons icon">undo</i>
+    <li @click="activate" :class="{active: this.buttonActivated}" class="icon-button">
+        <i class="material-icons icon">format_bold</i>
     </li>
 </template>
 
@@ -10,23 +10,23 @@
     import { Prop, Component } from 'vue-property-decorator'
 
     @Component({
-        name: 'undo'
+        name: 'Bold'
     })
-    export default class Undo extends Vue {
+    export default class Bold extends Vue {
         // @Prop() readonly iframe:HTMLIFrameElement
         @Prop({ required: true }) readonly iframe:HTMLIFrameElement
         private buttonActivated: boolean = false
 
         public activate () : void {
             this.iframe.contentWindow.document.body.focus();
-            this.iframe.contentWindow.document.execCommand('undo');
+            this.iframe.contentWindow.document.execCommand('bold');
             this.$root.$emit('mon-iframe-changed');
         }
 
         mounted () : void {
             this.$root.$on('mon-iframe-changed',  () => {
                 if (this.iframe) {
-                    this.buttonActivated = this.iframe.contentWindow.document.queryCommandEnabled('undo');
+                    this.buttonActivated = this.iframe.contentWindow.document.queryCommandState('bold');
                 }
             });
         }
