@@ -38,19 +38,10 @@
                 </li>
 
                 <li class="separator"></li>
-
-                <li @click="formatAlignLeft" :class="{active: this.formatJustifyLeftActivated}" class="icon-button">
-                    <i class="material-icons icon">format_align_left</i>
-                </li>
-                <li @click="formatAlignCenter" :class="{active: this.formatJustifyCenterActivated}" class="icon-button">
-                    <i class="material-icons icon">format_align_center</i>
-                </li>
-                <li @click="formatAlignRight" :class="{active: this.formatJustifyRightActivated}" class="icon-button">
-                    <i class="material-icons icon">format_align_right</i>
-                </li>
-                <li @click="formatAlignJustify" :class="{active: this.formatJustifyJustifyActivated}" class="icon-button">
-                    <i class="material-icons icon">format_align_justify</i>
-                </li>
+                <align-left :iframe="iframe"></align-left>
+                <align-center :iframe="iframe"></align-center>
+                <align-right :iframe="iframe"></align-right>
+                <align-justify :iframe="iframe"></align-justify>
                 <li class="separator"></li>
 
                 <li @click="insertUnorderedList" :class="{active: this.insertUnorderedListActivated}" class="icon-button">
@@ -146,10 +137,10 @@
             </ul>
             <slot name="toolbar" v-bind="{ toolbarToShow, changeToolbarToShow, custom, iframe }"></slot>
         </div>
-        <div class="main-component-wrapper" :class="{'view-source': this.viewSourceCodeActivated}">
-            <iframe class="main-component"></iframe>
-            <textarea class="source-code" :name="sourceFormName" @keyup="sourceCodeChanged" v-model="currentValue"></textarea>
-            <slot name="overlay" v-bind="{ iframe }"></slot>
+        <div class="panel" >
+            <iframe :class="{'active': this.activePanel === 'main'}" class="main-component"></iframe>
+            <textarea :class="{'active': this.activePanel === 'source-code'}" class="source-code" :name="sourceFormName" @keyup="sourceCodeChanged" v-model="currentValue"></textarea>
+            <slot name="overlay" v-bind="{ iframe, activePanel }"></slot>
         </div>
 
     </div>
@@ -165,12 +156,12 @@
             right: 0;
             bottom: 0;
 
-            .main-component-wrapper {
+            .panel {
                 height: calc(100% - 44px);
             }
         }
 
-        .main-component-wrapper {
+        .panel {
             border: 1px solid #CCC;
             margin-top: -1px;
             width: 100%;
@@ -178,13 +169,9 @@
             z-index: 1;
             height: 400px;
 
-            &.view-source {
-                .source-code {
-                    z-index: 3;
-                }
-            }
 
-            .main-component, .source-code {
+
+            > * {
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -194,10 +181,12 @@
                 background: white;
                 border: none;
                 outline: none;
+                &.active {
+                    z-index: 3;
+                }
             }
 
             .source-code {
-                z-index: 1;
                 background: #f1f1f1;
                 color: #333;
                 padding: 12px;
@@ -296,12 +285,16 @@
     import Bold from "./buttons/bold.vue";
     import Italic from "./buttons/italic.vue";
     import Underline from "./buttons/underline.vue";
+    import AlignLeft from "./buttons/align-left.vue";
+    import AlignCenter from "./buttons/align-center.vue";
+    import AlignRight from "./buttons/align-right.vue";
+    import AlignJustify from "./buttons/align-justify.vue";
     declare var openFileManagerComponent;
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
-        components: {Underline, Italic, Bold, Redo, Undo}
+        components: {AlignJustify, AlignRight, AlignCenter, AlignLeft, Underline, Italic, Bold, Redo, Undo}
     })
     export default class MonRichTextEditor extends Vue {
         @Prop({ type: String, default: '' }) readonly value:string
@@ -310,17 +303,13 @@
 
         private iframe: HTMLIFrameElement = null
         private iframeDocument: Document = null
-        private formatUnderlineActivated: boolean = false
-        private formatJustifyLeftActivated: boolean = false
-        private formatJustifyCenterActivated: boolean = false
-        private formatJustifyRightActivated: boolean = false
-        private formatJustifyJustifyActivated: boolean = false
         private insertUnorderedListActivated: boolean = false
         private insertOrderedListActivated: boolean = false
         private linkActivated: boolean = false
         private viewSourceCodeActivated: boolean = false
         private currentValue: string = ''
         public toolbarToShow: string = 'main'
+        public activePanel: string = 'main'
         private foreColor: string = ''
         private backColor: string = ''
         private fontSize: string = ''
@@ -333,43 +322,6 @@
 
         public changeToolbarToShow (value:string) : void {
             this.toolbarToShow = value;
-        }
-
-
-
-        public formatUnderline () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('underline');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
-
-        public formatAlignLeft () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('justifyLeft');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
-
-        public formatAlignCenter () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('justifyCenter');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
-
-        public formatAlignRight () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('justifyRight');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
-
-        public formatAlignJustify () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('justifyFull');
-            this.checkButtonStates();
-            this.iframeChanged();
         }
 
         public insertUnorderedList () : void {
@@ -531,6 +483,7 @@
             this.viewSourceCodeActivated = !this.viewSourceCodeActivated;
             if (this.viewSourceCodeActivated) {
                 this.toolbarToShow = 'source-code';
+                this.activePanel = 'source-code';
                 let textArea = this.$el.getElementsByClassName('source-code')[0] as HTMLElement;
                 textArea.focus();
             } else {
@@ -552,13 +505,6 @@
 
 
         private initButtonStates () {
-            this.formatUnderlineActivated = this.iframeDocument.queryCommandState('underline');
-
-            this.formatJustifyLeftActivated = this.iframeDocument.queryCommandState('justifyLeft');
-            this.formatJustifyCenterActivated = this.iframeDocument.queryCommandState('justifyCenter');
-            this.formatJustifyRightActivated = this.iframeDocument.queryCommandState('justifyRight');
-            this.formatJustifyJustifyActivated = this.iframeDocument.queryCommandState('justifyFull');
-
             this.insertUnorderedListActivated = this.iframeDocument.queryCommandState('insertUnorderedList');
             this.insertOrderedListActivated = this.iframeDocument.queryCommandState('insertOrderedList');
 
