@@ -1,8 +1,8 @@
 <template>
     <div class="mon-rich-text-editor">
         <div class="actions-bar" >
-            <ul :class="{'hide': this.toolbarToShow !== 'main'}">
-                <slot name="buttons-front" v-bind="{ toolbarToShow, changeToolbarToShow, iframe }"></slot>
+            <ul :class="{'hide': this.activeToolbar !== 'main'}">
+                <slot name="buttons-front" v-bind="{ activeToolbar, setActiveToolbar, iframe }"></slot>
                 <undo :iframe="iframe"></undo>
                 <redo :iframe="iframe"></redo>
                 <li class="separator"></li>
@@ -55,16 +55,16 @@
                 <li @click="viewSourceCode" class="icon-button">
                     <i class="material-icons icon">code</i>
                 </li>
-                <slot name="buttons" v-bind="{ changeToolbarToShow }"></slot>
+                <slot name="buttons" v-bind="{ setActiveToolbar }"></slot>
             </ul>
 
 
-            <ul :class="{'hide': this.toolbarToShow !== 'source-code'}">
+            <ul :class="{'hide': this.activeToolbar !== 'source-code'}">
                 <li @click="viewSourceCode" class="text-button">
                     Show WYSIWYG
                 </li>
             </ul>
-            <ul :class="{'hide': this.toolbarToShow !== 'text'}">
+            <ul :class="{'hide': this.activeToolbar !== 'text'}">
                 <li @click="formatBlock('div')" class="text-button">
                     div
                 </li>
@@ -89,53 +89,53 @@
                 <li @click="formatBlock('em')" class="text-button">
                     em (selection required)
                 </li>
-                <button type="button" class="btn btn-small btn-inline" @click="toolbarToShow = 'main'"  >Cancel</button>
+                <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
             </ul>
 
-            <ul :class="{'hide': this.toolbarToShow !== 'fore-color'}">
+            <ul :class="{'hide': this.activeToolbar !== 'fore-color'}">
                 <li>
                     <label>Text Color:</label>
                     <input type="text" placeholder="#123123" v-model="foreColor"/>
                     <button type="button" class="btn btn-small btn-inline" @click="changeForeColor"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="toolbarToShow = 'main'"  >Cancel</button>
+                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
                 </li>
             </ul>
-            <ul :class="{'hide': this.toolbarToShow !== 'back-color'}">
+            <ul :class="{'hide': this.activeToolbar !== 'back-color'}">
                 <li>
                     <label>Background Color:</label>
                     <input type="text" placeholder="#123123" v-model="backColor"/>
                     <button type="button" class="btn btn-small btn-inline" @click="changeBackColor"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="toolbarToShow = 'main'"  >Cancel</button>
+                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
                 </li>
             </ul>
-            <ul :class="{'hide': this.toolbarToShow !== 'link'}">
+            <ul :class="{'hide': this.activeToolbar !== 'link'}">
                 <li>
                     <label>Link:</label>
-                    <input type="text" placeholder="url " />
+                    <input type="text" placeholder="url " v-model="linkUrl"/>
                     <input type="text" placeholder="html" v-model="linkTitle"/>
                     <button type="button" class="btn btn-small btn-inline" @click="addLink"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="toolbarToShow = 'main'"  >Cancel</button>
+                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
                 </li>
             </ul>
 
-            <ul :class="{'hide': this.toolbarToShow !== 'font-size'}">
+            <ul :class="{'hide': this.activeToolbar !== 'font-size'}">
                 <li>
                     <input type="text" placeholder="16px" v-model="fontSize"/>
                     <button type="button" class="btn btn-small btn-inline" @click="changeFontSize"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="toolbarToShow = 'main'"  >Cancel</button>
+                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
                 </li>
             </ul>
-            <ul :class="{'hide': this.toolbarToShow !== 'table'}">
+            <ul :class="{'hide': this.activeToolbar !== 'table'}">
                 <li>
                     <label>Table (Row x Column):</label>
 
                     <input type="number" min="1" placeholder="row" v-model="tableRow"/> x
                     <input type="number" min="1" placeholder="column" v-model="tableColumn"/>
                     <button type="button" class="btn btn-small btn-inline" @click="insertTable"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="toolbarToShow = 'main'"  >Cancel</button>
+                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
                 </li>
             </ul>
-            <slot name="toolbar" v-bind="{ toolbarToShow, changeToolbarToShow, custom, iframe }"></slot>
+            <slot name="toolbar" v-bind="{ activeToolbar, setActiveToolbar, custom, iframe }"></slot>
         </div>
         <div class="panel" >
             <iframe :class="{'active': this.activePanel === 'main'}" class="main-component"></iframe>
@@ -148,7 +148,7 @@
 
 <style lang="scss">
     .mon-rich-text-editor {
-        .full-screen {
+        &.full-screen {
             position: fixed;
             z-index: 99999;
             top: 0;
@@ -308,7 +308,7 @@
         private linkActivated: boolean = false
         private viewSourceCodeActivated: boolean = false
         private currentValue: string = ''
-        public toolbarToShow: string = 'main'
+        public activeToolbar: string = 'main'
         public activePanel: string = 'main'
         private foreColor: string = ''
         private backColor: string = ''
@@ -320,8 +320,8 @@
         private tableColumn: number = 1
         public custom: object = {}
 
-        public changeToolbarToShow (value:string) : void {
-            this.toolbarToShow = value;
+        public setActiveToolbar (value:string) : void {
+            this.activeToolbar = value;
         }
 
         public insertUnorderedList () : void {
@@ -347,7 +347,7 @@
         }
 
         public showForeColorToolbar () : void {
-            this.toolbarToShow = 'fore-color';
+            this.activeToolbar = 'fore-color';
             this.foreColor = '';
         }
         public changeForeColor () : void {
@@ -355,11 +355,11 @@
             this.iframeDocument.execCommand('foreColor', false, this.foreColor);
             this.checkButtonStates();
             this.iframeChanged();
-            this.toolbarToShow = 'main';
+            this.activeToolbar = 'main';
         }
 
         public showBackColorToolbar () : void {
-            this.toolbarToShow = 'back-color';
+            this.activeToolbar = 'back-color';
             this.backColor = '';
         }
         public changeBackColor () : void {
@@ -367,7 +367,7 @@
             this.iframeDocument.execCommand('backColor', false, this.backColor);
             this.checkButtonStates();
             this.iframeChanged();
-            this.toolbarToShow = 'main';
+            this.activeToolbar = 'main';
         }
         public formatBlock (tagName) : void {
             tagName = tagName.toLowerCase();
@@ -380,7 +380,7 @@
             }
             this.checkButtonStates();
             this.iframeChanged();
-            this.toolbarToShow = 'main';
+            this.activeToolbar = 'main';
         }
 
         public addLink () : void {
@@ -390,11 +390,8 @@
             }
             let html = `<a href="${this.linkUrl};">${selectedHtml}</a>`
             this.iframeDocument.execCommand('insertHTML', false, html);
-            this.linkUrl = '';
-            this.linkTitle = '';
-            this.checkButtonStates();
             this.iframeChanged();
-            this.toolbarToShow = 'main';
+            this.activeToolbar = 'main';
         }
 
 
@@ -426,7 +423,7 @@
 
             this.checkButtonStates();
             this.iframeChanged();
-            this.toolbarToShow = 'main';
+            this.activeToolbar = 'main';
         }
 
         public insertTable () : void {
@@ -443,7 +440,7 @@
 
             this.checkButtonStates();
             this.iframeChanged();
-            this.toolbarToShow = 'main';
+            this.activeToolbar = 'main';
         }
 
         public addPhoto (): void {
@@ -456,22 +453,22 @@
 
 
         public showLinkToolbar () : void {
-            this.toolbarToShow = 'link';
+            this.activeToolbar = 'link';
         }
 
         public showFontSizeToolbar () : void {
-            this.toolbarToShow = 'font-size';
+            this.activeToolbar = 'font-size';
         }
         public showModulesToolbar () : void {
-            this.toolbarToShow = 'modules';
+            this.activeToolbar = 'modules';
         }
 
         public showTableToolbar () : void {
-            this.toolbarToShow = 'table';
+            this.activeToolbar = 'table';
         }
 
         public showTextToolbar () : void {
-            this.toolbarToShow = 'text';
+            this.activeToolbar = 'text';
         }
 
         public alterIframe (customFunc: Function) : void {
@@ -482,12 +479,12 @@
         public viewSourceCode () : void {
             this.viewSourceCodeActivated = !this.viewSourceCodeActivated;
             if (this.viewSourceCodeActivated) {
-                this.toolbarToShow = 'source-code';
+                this.activeToolbar = 'source-code';
                 this.activePanel = 'source-code';
                 let textArea = this.$el.getElementsByClassName('source-code')[0] as HTMLElement;
                 textArea.focus();
             } else {
-                this.toolbarToShow = 'main';
+                this.activeToolbar = 'main';
                 this.iframeDocument.body.focus();
             }
             this.checkButtonStates();
@@ -508,25 +505,22 @@
             this.insertUnorderedListActivated = this.iframeDocument.queryCommandState('insertUnorderedList');
             this.insertOrderedListActivated = this.iframeDocument.queryCommandState('insertOrderedList');
 
-
-            let windowIframe = this.iframe.contentWindow as Window;
-            let currentNode = windowIframe.getSelection().focusNode as HTMLElement;
-            if (currentNode && currentNode.nodeType === 3) {
-                currentNode = currentNode.parentElement;
-            }
-
-            if (this.toolbarToShow === 'link') {
-                this.linkTitle = '';
-                this.linkUrl = '';
-            }
-            if (currentNode) {
-                this.linkActivated = currentNode.nodeName.toLowerCase() === 'a';
-                if (this.linkActivated) {
-                    this.linkTitle = currentNode.innerHTML;
-                    this.linkUrl = currentNode.getAttribute('href');
+            if (this.activeToolbar === 'main') {
+                let windowIframe = this.iframe.contentWindow as Window;
+                let currentNode = windowIframe.getSelection().focusNode as HTMLElement;
+                if (currentNode && currentNode.nodeType === 3) {
+                    currentNode = currentNode.parentElement;
                 }
-                this.formatBlockElement = currentNode.parentElement.nodeName.toLowerCase();
-                this.fontSize = windowIframe.getComputedStyle(currentNode, null)['fontSize'];
+
+                if (currentNode) {
+                    this.linkActivated = currentNode.nodeName.toLowerCase() === 'a';
+                    if (this.linkActivated) {
+                        this.linkTitle = currentNode.innerHTML;
+                        this.linkUrl = currentNode.getAttribute('href');
+                    }
+                    this.formatBlockElement = currentNode.parentElement.nodeName.toLowerCase();
+                    this.fontSize = windowIframe.getComputedStyle(currentNode, null)['fontSize'];
+                }
             }
         }
 
