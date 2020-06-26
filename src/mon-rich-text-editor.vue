@@ -2,7 +2,7 @@
     <div class="mon-rich-text-editor">
         <div class="actions-bar" >
             <ul :class="{'hide': this.activeToolbar !== 'main'}">
-                <slot name="buttons-front" v-bind="{ activeToolbar, setActiveToolbar, iframe }"></slot>
+                <slot name="buttons-front" v-bind="{ activeToolbar, setActiveToolbar, iframe, setActivePanel }"></slot>
                 <undo :iframe="iframe"></undo>
                 <redo :iframe="iframe"></redo>
                 <li class="separator"></li>
@@ -55,7 +55,7 @@
                 <li @click="viewSourceCode" class="icon-button">
                     <i class="material-icons icon">code</i>
                 </li>
-                <slot name="buttons" v-bind="{ setActiveToolbar }"></slot>
+                <slot name="buttons" v-bind="{ setActiveToolbar, setActivePanel }"></slot>
             </ul>
 
 
@@ -135,12 +135,12 @@
                     <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
                 </li>
             </ul>
-            <slot name="toolbar" v-bind="{ activeToolbar, setActiveToolbar, custom, iframe }"></slot>
+            <slot name="toolbar" v-bind="{ activeToolbar, setActiveToolbar, iframe, setActivePanel }"></slot>
         </div>
         <div class="panel" >
             <iframe :class="{'active': this.activePanel === 'main'}" class="main-component"></iframe>
             <textarea :class="{'active': this.activePanel === 'source-code'}" class="source-code" :name="sourceFormName" @keyup="sourceCodeChanged" v-model="currentValue"></textarea>
-            <slot name="overlay" v-bind="{ iframe, activePanel }"></slot>
+            <slot name="panel" v-bind="{ iframe, activePanel, setActivePanel }"></slot>
         </div>
 
     </div>
@@ -318,10 +318,13 @@
         private formatBlockElement: string = 'div'
         private tableRow: number = 1
         private tableColumn: number = 1
-        public custom: object = {}
 
         public setActiveToolbar (value:string) : void {
             this.activeToolbar = value;
+        }
+
+        public setActivePanel (value:string) : void {
+            this.activePanel = value;
         }
 
         public insertUnorderedList () : void {
@@ -471,11 +474,6 @@
             this.activeToolbar = 'text';
         }
 
-        public alterIframe (customFunc: Function) : void {
-            customFunc(this.iframeDocument)
-            //.head.getElementsByClassName(firstChildClassName)
-        }
-
         public viewSourceCode () : void {
             this.viewSourceCodeActivated = !this.viewSourceCodeActivated;
             if (this.viewSourceCodeActivated) {
@@ -485,6 +483,7 @@
                 textArea.focus();
             } else {
                 this.activeToolbar = 'main';
+                this.activePanel = 'main';
                 this.iframeDocument.body.focus();
             }
             this.checkButtonStates();
