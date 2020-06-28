@@ -555,6 +555,12 @@
             this.iframeDocument.body.focus();
             this.checkButtonStates();
             this.iframeDocument.body.blur();
+
+            const observer = new MutationObserver(() => {
+                this.iframeChanged();
+            });
+            observer.observe(this.iframeDocument.body, { attributes: true, childList: true, subtree: true });
+
             /*
             element.addEventListener('keypress', e(ev){
           if(ev.keyCode == '13')
