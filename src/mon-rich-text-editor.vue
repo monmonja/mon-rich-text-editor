@@ -44,12 +44,8 @@
                 <align-justify :iframe="iframe"></align-justify>
                 <li class="separator"></li>
 
-                <li @click="insertUnorderedList" :class="{active: this.insertUnorderedListActivated}" class="icon-button">
-                    <i class="material-icons icon">format_list_bulleted</i>
-                </li>
-                <li @click="insertOrderedList" :class="{active: this.insertOrderedListActivated}" class="icon-button">
-                    <i class="material-icons icon">format_list_numbered</i>
-                </li>
+                <unordered-list :iframe="iframe"></unordered-list>
+                <ordered-list :iframe="iframe"></ordered-list>
                 <li class="separator"></li>
 
                 <li @click="viewSourceCode" class="icon-button">
@@ -289,12 +285,14 @@
     import AlignCenter from "./buttons/align-center.vue";
     import AlignRight from "./buttons/align-right.vue";
     import AlignJustify from "./buttons/align-justify.vue";
+    import UnorderedList from "./buttons/unordered-list.vue";
+    import OrderedList from "./buttons/ordered-list.vue";
     declare var openFileManagerComponent;
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
-        components: {AlignJustify, AlignRight, AlignCenter, AlignLeft, Underline, Italic, Bold, Redo, Undo}
+        components: {OrderedList, UnorderedList, AlignJustify, AlignRight, AlignCenter, AlignLeft, Underline, Italic, Bold, Redo, Undo}
     })
     export default class MonRichTextEditor extends Vue {
         @Prop({ type: String, default: '' }) readonly value:string
@@ -303,8 +301,6 @@
 
         private iframe: HTMLIFrameElement = null
         private iframeDocument: Document = null
-        private insertUnorderedListActivated: boolean = false
-        private insertOrderedListActivated: boolean = false
         private linkActivated: boolean = false
         private viewSourceCodeActivated: boolean = false
         private currentValue: string = ''
@@ -326,21 +322,6 @@
         public setActivePanel (value:string) : void {
             this.activePanel = value;
         }
-
-        public insertUnorderedList () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('insertUnorderedList');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
-
-        public insertOrderedList () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('insertOrderedList');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
-
 
         public addHorizontalRule () : void {
             this.iframeDocument.body.focus();
@@ -462,9 +443,6 @@
         public showFontSizeToolbar () : void {
             this.activeToolbar = 'font-size';
         }
-        public showModulesToolbar () : void {
-            this.activeToolbar = 'modules';
-        }
 
         public showTableToolbar () : void {
             this.activeToolbar = 'table';
@@ -499,11 +477,7 @@
             this.$emit('input',  this.currentValue);
         }
 
-
         private initButtonStates () {
-            this.insertUnorderedListActivated = this.iframeDocument.queryCommandState('insertUnorderedList');
-            this.insertOrderedListActivated = this.iframeDocument.queryCommandState('insertOrderedList');
-
             if (this.activeToolbar === 'main') {
                 let windowIframe = this.iframe.contentWindow as Window;
                 let currentNode = windowIframe.getSelection().focusNode as HTMLElement;
