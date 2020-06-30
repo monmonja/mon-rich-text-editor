@@ -3,8 +3,8 @@
         <div class="actions-bar" >
             <ul :class="{'hide': this.activeToolbar !== 'main'}">
                 <slot name="buttons-front" v-bind="{ activeToolbar, setActiveToolbar, iframe, setActivePanel }"></slot>
-                <undo :iframe="iframe"></undo>
-                <redo :iframe="iframe"></redo>
+                <undo :iframe="iframe" />
+                <redo :iframe="iframe" />
                 <li class="separator"></li>
 
                 <li @click="showTextToolbar" class="text-button " > <!-- v-html="formatBlockElement"> -->
@@ -13,15 +13,12 @@
                 <li @click="showFontSizeToolbar" class="text-button ">
                     Font Size : <span v-html="fontSize"></span>
                 </li>
-                <bold :iframe="iframe"></bold>
-                <italic :iframe="iframe"></italic>
-                <underline :iframe="iframe"></underline>
-                <li @click="showForeColorToolbar"  class="icon-button">
-                    <i class="material-icons icon">text_format</i>
-                </li>
-                <li @click="showBackColorToolbar" class="icon-button">
-                    <i class="material-icons icon">format_paint</i>
-                </li>
+
+                <bold :iframe="iframe" />
+                <italic :iframe="iframe" />
+                <underline :iframe="iframe" />
+                <fore-color :set-active-toolbar="setActiveToolbar" />
+                <back-color :set-active-toolbar="setActiveToolbar" />
                 <li class="separator"></li>
 
                 <li @click="showLinkToolbar" :class="{active: this.linkActivated}" class="icon-button">
@@ -33,19 +30,17 @@
                 <li @click="showTableToolbar" class="icon-button">
                     <i class="material-icons icon">table_view</i>
                 </li>
-                <li @click="addHorizontalRule" class="icon-button">
-                    <i class="material-icons icon">horizontal_rule</i>
-                </li>
+                <horizontal-rule :iframe="iframe" />
 
                 <li class="separator"></li>
-                <align-left :iframe="iframe"></align-left>
-                <align-center :iframe="iframe"></align-center>
-                <align-right :iframe="iframe"></align-right>
-                <align-justify :iframe="iframe"></align-justify>
+                <align-left :iframe="iframe" />
+                <align-center :iframe="iframe" />
+                <align-right :iframe="iframe" />
+                <align-justify :iframe="iframe" />
                 <li class="separator"></li>
 
-                <unordered-list :iframe="iframe"></unordered-list>
-                <ordered-list :iframe="iframe"></ordered-list>
+                <unordered-list :iframe="iframe" />
+                <ordered-list :iframe="iframe" />
                 <li class="separator"></li>
 
                 <li @click="viewSourceCode" class="icon-button">
@@ -88,22 +83,17 @@
                 <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
             </ul>
 
-            <ul :class="{'hide': this.activeToolbar !== 'fore-color'}">
-                <li>
-                    <label>Text Color:</label>
-                    <input type="text" placeholder="#123123" v-model="foreColor"/>
-                    <button type="button" class="btn btn-small btn-inline" @click="changeForeColor"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
-                </li>
-            </ul>
-            <ul :class="{'hide': this.activeToolbar !== 'back-color'}">
-                <li>
-                    <label>Background Color:</label>
-                    <input type="text" placeholder="#123123" v-model="backColor"/>
-                    <button type="button" class="btn btn-small btn-inline" @click="changeBackColor"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
-                </li>
-            </ul>
+            <fore-color-toolbar
+                    :iframe="iframe"
+                    :set-active-toolbar="setActiveToolbar"
+                    :class="{'hide': this.activeToolbar !== 'fore-color'}"
+             />
+            <back-color-toolbar
+                    :iframe="iframe"
+                    :set-active-toolbar="setActiveToolbar"
+                    :class="{'hide': this.activeToolbar !== 'back-color'}"
+             />
+
             <ul :class="{'hide': this.activeToolbar !== 'link'}">
                 <li>
                     <label>Link:</label>
@@ -166,7 +156,6 @@
             height: 400px;
 
 
-
             > * {
                 position: absolute;
                 top: 0;
@@ -177,6 +166,7 @@
                 background: white;
                 border: none;
                 outline: none;
+                overflow: auto;
                 &.active {
                     z-index: 3;
                 }
@@ -287,12 +277,22 @@
     import AlignJustify from "./buttons/align-justify.vue";
     import UnorderedList from "./buttons/unordered-list.vue";
     import OrderedList from "./buttons/ordered-list.vue";
+    import ForeColor from "./buttons/fore-color.vue";
+    import ForeColorToolbar from "./toolbars/fore-color-toolbar.vue";
+    import BackColor from "./buttons/back-color.vue";
+    import BackColorToolbar from "./toolbars/back-color-toolbar.vue";
+    import HorizontalRule from "./buttons/horizontal-rule.vue";
     declare var openFileManagerComponent;
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
-        components: {OrderedList, UnorderedList, AlignJustify, AlignRight, AlignCenter, AlignLeft, Underline, Italic, Bold, Redo, Undo}
+        components: {
+            HorizontalRule,
+            BackColorToolbar,
+            BackColor,
+            ForeColorToolbar,
+            ForeColor, OrderedList, UnorderedList, AlignJustify, AlignRight, AlignCenter, AlignLeft, Underline, Italic, Bold, Redo, Undo}
     })
     export default class MonRichTextEditor extends Vue {
         @Prop({ type: String, default: '' }) readonly value:string
@@ -306,8 +306,7 @@
         private currentValue: string = ''
         public activeToolbar: string = 'main'
         public activePanel: string = 'main'
-        private foreColor: string = ''
-        private backColor: string = ''
+
         private fontSize: string = ''
         private linkUrl: string = ''
         private linkTitle: string = ''
@@ -323,36 +322,8 @@
             this.activePanel = value;
         }
 
-        public addHorizontalRule () : void {
-            this.iframeDocument.body.focus();
-            this.iframeDocument.execCommand('insertHorizontalRule');
-            this.checkButtonStates();
-            this.iframeChanged();
-        }
 
-        public showForeColorToolbar () : void {
-            this.activeToolbar = 'fore-color';
-            this.foreColor = '';
-        }
-        public changeForeColor () : void {
-            this.iframeDocument.execCommand('styleWithCSS', false, 'true');
-            this.iframeDocument.execCommand('foreColor', false, this.foreColor);
-            this.checkButtonStates();
-            this.iframeChanged();
-            this.activeToolbar = 'main';
-        }
 
-        public showBackColorToolbar () : void {
-            this.activeToolbar = 'back-color';
-            this.backColor = '';
-        }
-        public changeBackColor () : void {
-            this.iframeDocument.execCommand('styleWithCSS', false, 'true');
-            this.iframeDocument.execCommand('backColor', false, this.backColor);
-            this.checkButtonStates();
-            this.iframeChanged();
-            this.activeToolbar = 'main';
-        }
         public formatBlock (tagName) : void {
             tagName = tagName.toLowerCase();
             let selectedHtml = this.getSelectedHtml();
