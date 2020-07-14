@@ -111,16 +111,12 @@
                     <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
                 </li>
             </ul>
-            <ul :class="{'hide': this.activeToolbar !== 'table'}">
-                <li>
-                    <label>Table (Row x Column):</label>
+            <table-toolbar
+                    :iframe="iframe"
+                    :set-active-toolbar="setActiveToolbar"
+                    :class="{'hide': this.activeToolbar !== 'table'}"
+            />
 
-                    <input type="number" min="1" placeholder="row" v-model="tableRow"/> x
-                    <input type="number" min="1" placeholder="column" v-model="tableColumn"/>
-                    <button type="button" class="btn btn-small btn-inline" @click="insertTable"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
-                </li>
-            </ul>
             <slot name="toolbar" v-bind="{ activeToolbar, setActiveToolbar, iframe, setActivePanel }"></slot>
         </div>
         <div class="panel" >
@@ -282,12 +278,14 @@
     import BackColor from "./buttons/back-color.vue";
     import BackColorToolbar from "./toolbars/back-color-toolbar.vue";
     import HorizontalRule from "./buttons/horizontal-rule.vue";
+    import TableToolbar from "./toolbars/table-toolbar.vue";
     declare var openFileManagerComponent;
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
         components: {
+            TableToolbar,
             HorizontalRule,
             BackColorToolbar,
             BackColor,
@@ -311,8 +309,7 @@
         private linkUrl: string = ''
         private linkTitle: string = ''
         private formatBlockElement: string = 'div'
-        private tableRow: number = 1
-        private tableColumn: number = 1
+
 
         public setActiveToolbar (value:string) : void {
             this.activeToolbar = value;
@@ -381,22 +378,6 @@
             this.activeToolbar = 'main';
         }
 
-        public insertTable () : void {
-            let html = `<table>`;
-            for (let i = 0; i < this.tableRow; i += 1) {
-                html += '<tr>';
-                for (let j = 0; j < this.tableColumn; j += 1) {
-                    html += '<td> </td>';
-                }
-                html += '</tr>';
-            }
-            // html = '<iframe src="/" width="100%" frameborder="0"></iframe>'
-            this.iframeDocument.execCommand('insertHTML', false, html);
-
-            this.checkButtonStates();
-            this.iframeChanged();
-            this.activeToolbar = 'main';
-        }
 
         public addPhoto (): void {
             openFileManagerComponent((imageId, imageSrc) => {
