@@ -5,7 +5,7 @@
             <input type="number" min="1" placeholder="row" v-model="tableRow"/> x
             <input type="number" min="1" placeholder="column" v-model="tableColumn"/>
             <button type="button" class="btn btn-small btn-inline" @click="insertTable"  >Apply</button>
-            <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
+            <button type="button" class="btn btn-small btn-inline" @click="setActiveToolbar('main')"  >Cancel</button>
         </li>
     </ul>
 </template>

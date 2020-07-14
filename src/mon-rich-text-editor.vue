@@ -7,13 +7,8 @@
                 <redo :iframe="iframe" />
                 <li class="separator"></li>
 
-                <li @click="showTextToolbar" class="text-button " > <!-- v-html="formatBlockElement"> -->
-                    Text Style
-                </li>
-                <li @click="showFontSizeToolbar" class="text-button ">
-                    Font Size : <span v-html="fontSize"></span>
-                </li>
-
+                <text-style :iframe="iframe" :set-active-toolbar="setActiveToolbar" />
+                <font-size :iframe="iframe" :set-active-toolbar="setActiveToolbar" />
                 <bold :iframe="iframe" />
                 <italic :iframe="iframe" />
                 <underline :iframe="iframe" />
@@ -21,9 +16,7 @@
                 <back-color :set-active-toolbar="setActiveToolbar" />
                 <li class="separator"></li>
 
-                <li @click="showLinkToolbar" :class="{active: this.linkActivated}" class="icon-button">
-                    <i class="material-icons icon">insert_link</i>
-                </li>
+                <anchor :iframe="iframe" :set-active-toolbar="setActiveToolbar" />
                 <li @click="addPhoto" class="icon-button">
                     <i class="material-icons icon">add_photo_alternate</i>
                 </li>
@@ -55,33 +48,13 @@
                     Show WYSIWYG
                 </li>
             </ul>
-            <ul :class="{'hide': this.activeToolbar !== 'text'}">
-                <li @click="formatBlock('div')" class="text-button">
-                    div
-                </li>
-                <li @click="formatBlock('p')" class="text-button">
-                    p
-                </li>
-                <li @click="formatBlock('h1')" class="text-button">
-                    h1
-                </li>
-                <li @click="formatBlock('h2')" class="text-button">
-                    h2
-                </li>
-                <li @click="formatBlock('h3')" class="text-button">
-                    h3
-                </li>
-                <li @click="formatBlock('h4')" class="text-button">
-                    h4
-                </li>
-                <li @click="formatBlock('Blockquote')" class="text-button">
-                    blockquote
-                </li>
-                <li @click="formatBlock('em')" class="text-button">
-                    em (selection required)
-                </li>
-                <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
-            </ul>
+
+
+            <format-block-toolbar
+                    :iframe="iframe"
+                    :set-active-toolbar="setActiveToolbar"
+                    :class="{'hide': this.activeToolbar !== 'text'}"
+             />
 
             <fore-color-toolbar
                     :iframe="iframe"
@@ -94,23 +67,18 @@
                     :class="{'hide': this.activeToolbar !== 'back-color'}"
              />
 
-            <ul :class="{'hide': this.activeToolbar !== 'link'}">
-                <li>
-                    <label>Link:</label>
-                    <input type="text" placeholder="url " v-model="linkUrl"/>
-                    <input type="text" placeholder="html" v-model="linkTitle"/>
-                    <button type="button" class="btn btn-small btn-inline" @click="addLink"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
-                </li>
-            </ul>
+            <link-toolbar
+                    :iframe="iframe"
+                    :set-active-toolbar="setActiveToolbar"
+                    :class="{'hide': this.activeToolbar !== 'link'}"
+            />
 
-            <ul :class="{'hide': this.activeToolbar !== 'font-size'}">
-                <li>
-                    <input type="text" placeholder="16px" v-model="fontSize"/>
-                    <button type="button" class="btn btn-small btn-inline" @click="changeFontSize"  >Apply</button>
-                    <button type="button" class="btn btn-small btn-inline" @click="activeToolbar = 'main'"  >Cancel</button>
-                </li>
-            </ul>
+            <font-size-toolbar
+                    :iframe="iframe"
+                    :set-active-toolbar="setActiveToolbar"
+                    :class="{'hide': this.activeToolbar !== 'font-size'}"
+            />
+
             <table-toolbar
                     :iframe="iframe"
                     :set-active-toolbar="setActiveToolbar"
@@ -279,12 +247,25 @@
     import BackColorToolbar from "./toolbars/back-color-toolbar.vue";
     import HorizontalRule from "./buttons/horizontal-rule.vue";
     import TableToolbar from "./toolbars/table-toolbar.vue";
+    import FontSizeToolbar from "./toolbars/font-size-toolbar.vue";
+    import FontSize from "./buttons/font-size.vue";
+    import Anchor from "./buttons/anchor.vue";
+    import LinkToolbar from "./toolbars/link-toolbar.vue";
+    import FormatBlockToolbar from "./toolbars/format-block-toolbar.vue";
+    import TextStyle from "./buttons/text-style.vue";
+
     declare var openFileManagerComponent;
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
         components: {
+            TextStyle,
+            FormatBlockToolbar,
+            LinkToolbar,
+            Anchor,
+            FontSize,
+            FontSizeToolbar,
             TableToolbar,
             HorizontalRule,
             BackColorToolbar,
@@ -299,16 +280,11 @@
 
         private iframe: HTMLIFrameElement = null
         private iframeDocument: Document = null
-        private linkActivated: boolean = false
+
         private viewSourceCodeActivated: boolean = false
         private currentValue: string = ''
         public activeToolbar: string = 'main'
         public activePanel: string = 'main'
-
-        private fontSize: string = ''
-        private linkUrl: string = ''
-        private linkTitle: string = ''
-        private formatBlockElement: string = 'div'
 
 
         public setActiveToolbar (value:string) : void {
@@ -317,65 +293,6 @@
 
         public setActivePanel (value:string) : void {
             this.activePanel = value;
-        }
-
-
-
-        public formatBlock (tagName) : void {
-            tagName = tagName.toLowerCase();
-            let selectedHtml = this.getSelectedHtml();
-            if (selectedHtml === '') {
-                this.iframeDocument.execCommand('formatBlock', false, tagName);
-            } else {
-                let html = `<${tagName}>${selectedHtml}</${tagName}>`
-                this.iframeDocument.execCommand('insertHTML', false, html);
-            }
-            this.checkButtonStates();
-            this.iframeChanged();
-            this.activeToolbar = 'main';
-        }
-
-        public addLink () : void {
-            let selectedHtml = this.getSelectedHtml();
-            if (selectedHtml === '') {
-                selectedHtml = this.linkTitle;
-            }
-            let html = `<a href="${this.linkUrl};">${selectedHtml}</a>`
-            this.iframeDocument.execCommand('insertHTML', false, html);
-            this.iframeChanged();
-            this.activeToolbar = 'main';
-        }
-
-
-        private getSelectedHtml () : string {
-            let windowIframe = this.iframe.contentWindow as Window;
-            let sel = windowIframe.getSelection(); // Gets selection
-
-            let selectedHtml = "";
-            if (sel.rangeCount) {
-                let container = this.iframeDocument.createElement("div");
-                for (let i = 0, len = sel.rangeCount; i < len; ++i) {
-                    container.appendChild(sel.getRangeAt(i).cloneContents());
-                }
-                let children = container.getElementsByTagName("*") as any;
-                for(let child of children) {
-                    if(child.style.fontSize) {
-                        child.style.fontSize = `${this.fontSize}`
-                    }
-                }
-                selectedHtml = container.innerHTML;
-            }
-            return selectedHtml;
-        }
-
-        public changeFontSize () : void {
-            let selectedHtml = this.getSelectedHtml();
-            let html = `<div style="font-size: ${this.fontSize};">${selectedHtml}</div>`
-            this.iframeDocument.execCommand('insertHTML', false, html);
-
-            this.checkButtonStates();
-            this.iframeChanged();
-            this.activeToolbar = 'main';
         }
 
 
@@ -388,20 +305,8 @@
         }
 
 
-        public showLinkToolbar () : void {
-            this.activeToolbar = 'link';
-        }
-
-        public showFontSizeToolbar () : void {
-            this.activeToolbar = 'font-size';
-        }
-
         public showTableToolbar () : void {
             this.activeToolbar = 'table';
-        }
-
-        public showTextToolbar () : void {
-            this.activeToolbar = 'text';
         }
 
         public viewSourceCode () : void {
@@ -416,7 +321,7 @@
                 this.activePanel = 'main';
                 this.iframeDocument.body.focus();
             }
-            this.checkButtonStates();
+            this.$root.$emit('mon-iframe-changed');
         }
 
         public sourceCodeChanged () : void {
@@ -427,31 +332,6 @@
         public iframeChanged () : void {
             this.currentValue = this.iframeDocument.body.innerHTML.trim();
             this.$emit('input',  this.currentValue);
-        }
-
-        private initButtonStates () {
-            if (this.activeToolbar === 'main') {
-                let windowIframe = this.iframe.contentWindow as Window;
-                let currentNode = windowIframe.getSelection().focusNode as HTMLElement;
-                if (currentNode && currentNode.nodeType === 3) {
-                    currentNode = currentNode.parentElement;
-                }
-
-                if (currentNode) {
-                    this.linkActivated = currentNode.nodeName.toLowerCase() === 'a';
-                    if (this.linkActivated) {
-                        this.linkTitle = currentNode.innerHTML;
-                        this.linkUrl = currentNode.getAttribute('href');
-                    }
-                    this.formatBlockElement = currentNode.parentElement.nodeName.toLowerCase();
-                    this.fontSize = windowIframe.getComputedStyle(currentNode, null)['fontSize'];
-                }
-            }
-        }
-
-        private checkButtonStates () {
-            this.initButtonStates();
-            this.$root.$emit('mon-iframe-changed');
         }
 
         private initIframe () : void {
@@ -473,17 +353,17 @@
             this.iframeDocument.close();
 
             this.iframeDocument.body.addEventListener('click',  () => {
-                this.checkButtonStates();
+                this.$root.$emit('mon-iframe-changed');
             });
             this.iframeDocument.body.addEventListener('keyup',  () => {
                 this.iframeChanged();
             });
             this.iframeDocument.body.focus();
-            this.checkButtonStates();
+            this.$root.$emit('mon-iframe-changed');
             this.iframeDocument.body.blur();
 
             const observer = new MutationObserver(() => {
-                this.iframeChanged();
+                this.$root.$emit('mon-iframe-changed');
             });
             observer.observe(this.iframeDocument.body, { attributes: true, childList: true, subtree: true });
 
@@ -502,7 +382,7 @@
             }
             this.initIframe();
             this.$root.$on('mon-iframe-changed', () => {
-                this.initButtonStates();
+                this.iframeChanged();
             });
 
         }
