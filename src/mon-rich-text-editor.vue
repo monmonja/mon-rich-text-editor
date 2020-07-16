@@ -17,9 +17,7 @@
                 <li class="separator"></li>
 
                 <anchor :iframe="iframe" :set-active-toolbar="setActiveToolbar" />
-                <li @click="addPhoto" class="icon-button">
-                    <i class="material-icons icon">add_photo_alternate</i>
-                </li>
+                <photo :iframe="iframe" :set-active-toolbar="setActiveToolbar" />
                 <li @click="showTableToolbar" class="icon-button">
                     <i class="material-icons icon">table_view</i>
                 </li>
@@ -253,13 +251,14 @@
     import LinkToolbar from "./toolbars/link-toolbar.vue";
     import FormatBlockToolbar from "./toolbars/format-block-toolbar.vue";
     import TextStyle from "./buttons/text-style.vue";
-
-    declare var openFileManagerComponent;
+    import Photo from "./buttons/photo.vue";
+    
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
         components: {
+            Photo,
             TextStyle,
             FormatBlockToolbar,
             LinkToolbar,
@@ -296,13 +295,6 @@
         }
 
 
-        public addPhoto (): void {
-            openFileManagerComponent((imageId, imageSrc) => {
-                let img = "<img src='" + imageSrc + "' >";
-                this.iframeDocument.execCommand("insertHTML", false, img);
-                this.iframeChanged();
-            });
-        }
 
 
         public showTableToolbar () : void {
@@ -330,8 +322,10 @@
         }
 
         public iframeChanged () : void {
-            this.currentValue = this.iframeDocument.body.innerHTML.trim();
-            this.$emit('input',  this.currentValue);
+            if (this.activePanel === 'main') {
+                this.currentValue = this.iframeDocument.body.innerHTML.trim();
+                this.$emit('input', this.currentValue);
+            }
         }
 
         private initIframe () : void {
