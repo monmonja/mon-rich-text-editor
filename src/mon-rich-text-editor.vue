@@ -34,18 +34,22 @@
                 <ordered-list :iframe="iframe" />
                 <li class="separator"></li>
 
-                <li @click="viewSourceCode" class="icon-button">
-                    <i class="material-icons icon">code</i>
-                </li>
+                <source-code
+                        :iframe="iframe"
+                        :set-active-toolbar="setActiveToolbar"
+                        :set-active-panel="setActivePanel"
+                        :component-el="this.$el"
+                    />
                 <slot name="buttons" v-bind="{ setActiveToolbar, setActivePanel }"></slot>
             </ul>
 
 
-            <ul :class="{'hide': this.activeToolbar !== 'source-code'}">
-                <li @click="viewSourceCode" class="text-button">
-                    Show WYSIWYG
-                </li>
-            </ul>
+            <source-code-toolbar
+                    :iframe="iframe"
+                    :set-active-toolbar="setActiveToolbar"
+                    :set-active-panel="setActivePanel"
+                    :class="{'hide': this.activeToolbar !== 'source-code'}">
+            </source-code-toolbar>
 
 
             <format-block-toolbar
@@ -87,7 +91,13 @@
         </div>
         <div class="panel" >
             <iframe :class="{'active': this.activePanel === 'main'}" class="main-component"></iframe>
-            <textarea :class="{'active': this.activePanel === 'source-code'}" class="source-code" :name="sourceFormName" @keyup="sourceCodeChanged" v-model="currentValue"></textarea>
+            <source-code-panel
+                    :iframe="iframe"
+                    :class="{'active': this.activePanel === 'source-code'}"
+                    :name="sourceFormName"
+                    v-model="currentValue"
+            />
+
             <slot name="panel" v-bind="{ iframe, activePanel, setActivePanel }"></slot>
         </div>
 
@@ -252,12 +262,18 @@
     import FormatBlockToolbar from "./toolbars/format-block-toolbar.vue";
     import TextStyle from "./buttons/text-style.vue";
     import Photo from "./buttons/photo.vue";
+    import SourceCodeToolbar from "./toolbars/source-code-toolbar.vue";
+    import SourceCode from "./buttons/source-code.vue";
+    import SourceCodePanel from "./panels/source-code-panel.vue";
     
     declare const jQuery;
 
     @Component({
         name: 'MonRichTextEditor',
         components: {
+            SourceCodePanel,
+            SourceCode,
+            SourceCodeToolbar,
             Photo,
             TextStyle,
             FormatBlockToolbar,
@@ -278,13 +294,10 @@
         @Prop({ type: String }) readonly sourceFormName:string
 
         private iframe: HTMLIFrameElement = null
-        private iframeDocument: Document = null
 
-        private viewSourceCodeActivated: boolean = false
         private currentValue: string = ''
         public activeToolbar: string = 'main'
         public activePanel: string = 'main'
-
 
         public setActiveToolbar (value:string) : void {
             this.activeToolbar = value;
@@ -294,45 +307,22 @@
             this.activePanel = value;
         }
 
-
-
-
         public showTableToolbar () : void {
             this.activeToolbar = 'table';
         }
 
-        public viewSourceCode () : void {
-            this.viewSourceCodeActivated = !this.viewSourceCodeActivated;
-            if (this.viewSourceCodeActivated) {
-                this.activeToolbar = 'source-code';
-                this.activePanel = 'source-code';
-                let textArea = this.$el.getElementsByClassName('source-code')[0] as HTMLElement;
-                textArea.focus();
-            } else {
-                this.activeToolbar = 'main';
-                this.activePanel = 'main';
-                this.iframeDocument.body.focus();
-            }
-            this.$root.$emit('mon-iframe-changed');
-        }
-
-        public sourceCodeChanged () : void {
-            this.iframeDocument.body.innerHTML = this.currentValue;
-            this.$emit('input',  this.currentValue);
-        }
 
         public iframeChanged () : void {
             if (this.activePanel === 'main') {
-                this.currentValue = this.iframeDocument.body.innerHTML.trim();
-                this.$emit('input', this.currentValue);
+                this.currentValue = this.iframe.contentWindow.document.body.innerHTML.trim()
+                this.$emit('input', this.currentValue)
             }
         }
 
         private initIframe () : void {
-            this.iframe = this.$el.getElementsByClassName('main-component')[0] as HTMLIFrameElement ;
-            this.iframeDocument = this.iframe.contentWindow.document;
-            this.iframeDocument.open();
-            this.iframeDocument.writeln(`<!DOCTYPE html>
+            this.iframe = this.$el.getElementsByClassName('main-component')[0] as HTMLIFrameElement
+            this.iframe.contentWindow.document.open()
+            this.iframe.contentWindow.document.writeln(`<!DOCTYPE html>
       <html lang="en">
         <head>
             <meta charset="UTF-8">
@@ -344,22 +334,22 @@
         </head>
         <body contenteditable="true">${this.currentValue}</body></html>
         `);
-            this.iframeDocument.close();
+            this.iframe.contentWindow.document.close()
 
-            this.iframeDocument.body.addEventListener('click',  () => {
-                this.$root.$emit('mon-iframe-changed');
-            });
-            this.iframeDocument.body.addEventListener('keyup',  () => {
-                this.iframeChanged();
-            });
-            this.iframeDocument.body.focus();
-            this.$root.$emit('mon-iframe-changed');
-            this.iframeDocument.body.blur();
+            this.iframe.contentWindow.document.body.addEventListener('click',  () => {
+                this.$root.$emit('mon-iframe-changed')
+            })
+            this.iframe.contentWindow.document.body.addEventListener('keyup',  () => {
+                this.iframeChanged()
+            })
+            this.iframe.contentWindow.document.body.focus()
+            this.$root.$emit('mon-iframe-changed')
+            this.iframe.contentWindow.document.body.blur()
 
             const observer = new MutationObserver(() => {
-                this.$root.$emit('mon-iframe-changed');
-            });
-            observer.observe(this.iframeDocument.body, { attributes: true, childList: true, subtree: true });
+                this.$root.$emit('mon-iframe-changed')
+            })
+            observer.observe(this.iframe.contentWindow.document.body, { attributes: true, childList: true, subtree: true });
 
             /*
             element.addEventListener('keypress', e(ev){
@@ -378,8 +368,8 @@
             this.$root.$on('mon-iframe-changed', () => {
                 this.iframeChanged();
             });
-
         }
+
         updated () : void {
             this.$root.$emit('mon-iframe-changed');
         }

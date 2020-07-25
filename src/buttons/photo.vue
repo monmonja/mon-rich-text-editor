@@ -20,9 +20,10 @@
 
         public addPhoto (): void {
             openFileManagerComponent((imageId, imageSrc) => {
-                let img = "<img src='" + imageSrc + "' >";
-                this.iframe.contentWindow.document.execCommand("insertHTML", false, img);
-                this.$root.$emit('mon-iframe-changed');
+                imageSrc = imageSrc.replace('-h250', '')
+                let img = "<img src='" + imageSrc + "' >"
+                this.iframe.contentWindow.document.execCommand("insertHTML", false, img)
+                this.$root.$emit('mon-iframe-changed')
             });
         }
 
