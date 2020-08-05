@@ -37,7 +37,7 @@
             if (selectedHtml === '') {
                 selectedHtml = this.linkTitle;
             }
-            let html = `<a href="${this.linkUrl};">${selectedHtml}</a>`
+            let html = `<a href="${this.linkUrl}">${selectedHtml}</a>`
             this.iframe.contentWindow.document.execCommand('insertHTML', false, html);
             this.$root.$emit('mon-iframe-changed');
             this.setActiveToolbar('main');
