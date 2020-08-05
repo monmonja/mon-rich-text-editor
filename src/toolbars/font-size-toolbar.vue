@@ -37,7 +37,12 @@
             this.$root.$on('mon-iframe-changed',  () => {
                 if (this.iframe) {
                     let currentNode = this.getCurrentNode(this.iframe);
-                    this.fontSize = this.iframe.contentWindow.getComputedStyle(currentNode, null)['fontSize'];
+                    if (currentNode !== null) {
+                        let computedStyle = this.iframe.contentWindow.getComputedStyle(currentNode, null);
+                        if (computedStyle != null) {
+                            this.fontSize = computedStyle['fontSize'];
+                        }
+                    }
                 }
             });
         }
