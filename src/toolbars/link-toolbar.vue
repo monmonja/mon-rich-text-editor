@@ -42,12 +42,17 @@
                 selectedHtml = this.linkTitle;
             }
             let target = '';
-            if (this.target !== '') {
+            if (this.target !== '' && this.target !== null) {
                 target = `target="${this.target}"`;
             }
 
-            let html = `<a href="${this.linkUrl}" ${target}>${selectedHtml}</a>`
+            if (this.isLink) {
+                this.removePreviousLink();
+            }
+
+            let html = `<a href="${this.linkUrl}" style="" ${target}>${selectedHtml}</a>`
             this.iframe.contentWindow.document.execCommand('insertHTML', false, html);
+            this.removeInlineStyle();
             this.$root.$emit('mon-iframe-changed');
 
             this.linkUrl = '';
@@ -57,14 +62,27 @@
             this.setActiveToolbar('main');
         }
 
-        public removeLink () : void {
+        public removePreviousLink () : void {
             let windowIframe = this.iframe.contentWindow as Window;
             let sel = windowIframe.getSelection();
-            let r = sel.getRangeAt(0);
-            let el = r.startContainer.parentElement;
-            el.parentNode.removeChild(el)
+            let range = sel.getRangeAt(0);
+            let linkElement = range.startContainer.parentElement;
+            linkElement.parentNode.removeChild(linkElement);
+            return linkElement;
+        }
 
-            this.iframe.contentWindow.document.execCommand('insertHTML', false, el.innerHTML);
+        public removeInlineStyle () : void {
+            let windowIframe = this.iframe.contentWindow as Window;
+            let sel = windowIframe.getSelection();
+            let range = sel.getRangeAt(0);
+            let linkElement = range.startContainer.parentElement;
+            linkElement.removeAttribute('style');
+        }
+
+        public removeLink () : void {
+            let linkElement = this.removePreviousLink();
+
+            this.iframe.contentWindow.document.execCommand('insertHTML', false, linkElement.innerHTML);
             this.$root.$emit('mon-iframe-changed');
             this.setActiveToolbar('main');
         }
