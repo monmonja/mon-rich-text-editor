@@ -40,7 +40,7 @@
                 selectedHtml = this.linkTitle;
             }
             let target = '';
-            if (this.target === '') {
+            if (this.target !== '') {
                 target = `target="${this.target}"`;
             }
 
