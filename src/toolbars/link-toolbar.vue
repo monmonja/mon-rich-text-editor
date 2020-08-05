@@ -62,7 +62,7 @@
             this.setActiveToolbar('main');
         }
 
-        public removePreviousLink () : void {
+        public removePreviousLink () : HTMLElement {
             let windowIframe = this.iframe.contentWindow as Window;
             let sel = windowIframe.getSelection();
             let range = sel.getRangeAt(0);
